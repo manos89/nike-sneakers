@@ -10,12 +10,14 @@
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 BOT_NAME = 'snkrs'
-
+ITEM_PIPELINES = {
+    'snkrs.pipelines.MongoPipeline': 300,
+}
 SPIDER_MODULES = ['snkrs.spiders']
 NEWSPIDER_MODULE = 'snkrs.spiders'
 MONGO_DATABASE = 'nikesnkrs'
 MONGO_URI = 'mongodb://localhost:27017'
-# RETRY_TIMES=20
+RETRY_TIMES=20
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'snkrs (+http://www.yourdomain.com)'
 

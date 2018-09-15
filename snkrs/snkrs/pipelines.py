@@ -29,7 +29,6 @@ class MongoPipeline(object):
     def open_spider(self, spider):
         ## initializing spider
         ## opening db connection
-        print('WILL CONNECT')
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
 
@@ -39,8 +38,15 @@ class MongoPipeline(object):
 
     def process_item(self, item, spider):
         ## how to handle each post
-        print('WILL ADD THE POST')
-        self.db[self.collection_name].insert(dict(item))
-        print("post added")
+        try:
+            results=self.db[self.collection_name].find({'shoe.id':item['shoe']['id']})
+            resultscount=results.limit(1).count()
+        except Exception as E:
+            print(str(E))
+            resultscount=0
+        if resultscount>0:
+            pass
+        else:
+            self.db[self.collection_name].insert(dict(item))
         logging.debug("Post added to MongoDB")
         return item
