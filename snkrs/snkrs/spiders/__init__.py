@@ -14,8 +14,6 @@ class QuotesSpider(scrapy.Spider):
 
 
     def parse(self, response):
-        print(response)
-
         data=json.loads(response.body)
         for d in data['threads']:
             l = ItemLoader(item=SnkrsItem(), response=response)
