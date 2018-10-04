@@ -59,7 +59,6 @@ class MongoPipeline(object):
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
-        SLACK_TOKEN="xoxp-437491873863-436445255330-448136545888-d5c529869ccfc9cbc7dfa6f2c7098a80"
         self.slack_client=SlackClient(SLACK_TOKEN)
 
     @classmethod
