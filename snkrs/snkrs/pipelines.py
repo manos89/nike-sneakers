@@ -25,7 +25,7 @@ def full_post(item):
             new_item_release_type = item['shoe']['product']['selectionEngine']
         except:
             new_item_release_type = "N/A"
-        new_item__publish_date = item['shoe']['publishedDate'].split('T')[0]
+        new_item__publish_date = item['shoe']['publishedDate']
         new_item_slug = item['shoe']['seoSlug']
         try:
             new_item_sizes = [s["nikeSize"] for s in item['shoe']['product']['skus']]
@@ -59,8 +59,7 @@ class MongoPipeline(object):
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
-        SLACK_TOKEN="xoxp-437491873863-436445255330-442031519588-2ca031d2e904e051a8c20b351b07bbbd"
-        # SLACK_TOKEN="NDg3ODAzNzkzOTQ2MzEyNzA0.DnS_lw.4qlQO15Kgj3IL3X1Ekk_kkcDoJc"
+        SLACK_TOKEN="xoxp-437491873863-436445255330-448136545888-d5c529869ccfc9cbc7dfa6f2c7098a80"
         self.slack_client=SlackClient(SLACK_TOKEN)
 
     @classmethod
@@ -83,7 +82,6 @@ class MongoPipeline(object):
         self.client.close()
 
     def process_item(self, item, spider):
-
         ## how to handle each post
         try:
             results=self.db[self.collection_name].find({'shoe.id':item['shoe']['id']})
@@ -94,19 +92,18 @@ class MongoPipeline(object):
 
             old_item_cards=results[0]['shoe']['cards']
             old_item_restriction=results[0]['shoe']['restricted']
+            old_item_style=results[0]['shoe']['product']['style']
             new_item_restriction = item['shoe']['restricted']
             new_item_style=item['shoe']['product']['style']
             new_item_color=item['shoe']['product']['colorCode']
             if old_item_restriction!=new_item_restriction and str(new_item_restriction)=='true':
                 attachments = full_post(item)
                 self.slack_client.api_call("chat.postMessage", channel="restricted_access", attachments=attachments)
-                self.db[self.collection_name].insert(dict(item))
-                # print('inserted ' + str(attachments))
-            if new_item_style=='999999' and new_item_color=='999':
+                print("restricted access!")
+            if new_item_style=='999999' and new_item_color=='999' and new_item_style!=old_item_style:
                 attachments = full_post(item)
                 self.slack_client.api_call("chat.postMessage", channel="hunt_bet", attachments=attachments)
-                self.db[self.collection_name].insert(dict(item))
-                # print('inserted ' + str(attachments))
+                print("hunt_bet")
             results = self.db[self.collection_name].update_one({"shoe.id": item['shoe']['id']},
                                                       {'$set': {"shoe": item['shoe']}})
 
@@ -114,6 +111,5 @@ class MongoPipeline(object):
             attachments=full_post(item)
             self.slack_client.api_call("chat.postMessage",channel="new_snkrs",attachments=attachments)
             self.db[self.collection_name].insert(dict(item))
-            # print('inserted '+str(attachments))
         logging.debug("Post added to MongoDB")
         return item
