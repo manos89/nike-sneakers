@@ -6,9 +6,10 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 
-import logging,json
+import logging
+import json
 import pymongo
-from slackclient import SlackClient
+import slack
 
 
 def full_post(item):
@@ -48,18 +49,20 @@ def full_post(item):
     attachments = [attachments]
     return attachments
 
-def create_field(fieldslist,title,value):
-    fieldslist.append({"title":title,"value":value,"short":False})
+
+def create_field(fieldslist, title, value):
+    fieldslist.append({"title": title, "value": value, "short": False})
     return fieldslist
 
-class MongoPipeline(object):
 
-    collection_name ="shoes"
+class MongoPipeline(object):
+    collection_name = "shoes"
 
     def __init__(self, mongo_uri, mongo_db):
+        SLACK_TOKEN = ""
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
-        self.slack_client=SlackClient(SLACK_TOKEN)
+        self.slack_client = slack.WebClient(SLACK_TOKEN)
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -80,35 +83,47 @@ class MongoPipeline(object):
         ## clean up when spider is closed
         self.client.close()
 
+    # def process_item(self, item, spider):
+    #     ## how to handle each post
+    #     try:
+    #         results = self.db[self.collection_name].find({'id': item['shoe']['id']})
+    #         resultscount = results.limit(1).count()
+    #     except Exception as E:
+    #         resultscount = 0
+    #     if resultscount > 0:
+    #
+    #         old_item_cards = results[0]['shoe']['cards']
+    #         old_item_restriction = results[0]['shoe']['restricted']
+    #         old_item_style = results[0]['shoe']['product']['style']
+    #         new_item_restriction = item['shoe']['restricted']
+    #         new_item_style = item['shoe']['product']['style']
+    #         new_item_color = item['shoe']['product']['colorCode']
+    #         # if old_item_restriction != new_item_restriction and str(new_item_restriction) == 'true':
+    #         #     attachments = full_post(item)
+    #         #     self.slack_client.api_call("chat.postMessage", channel="restricted_access", attachments=attachments)
+    #         #     print("restricted access!")
+    #         # if new_item_style == '999999' and new_item_color == '999' and new_item_style != old_item_style:
+    #         #     attachments = full_post(item)
+    #         #     self.slack_client.api_call("chat.postMessage", channel="hunt_bet", attachments=attachments)
+    #         #     print("hunt_bet")
+    #         results = self.db[self.collection_name].update_one({"id": item['shoe']['id']},
+    #                                                            item["shoe"], upsert=True)
+    #
+    #     else:
+    #         attachments = full_post(item)
+    #         # self.slack_client.api_call("chat.postMessage", channel="new_snkrs", attachments=attachments)
+    #         self.db[self.collection_name].insert(dict(item)["shoe"])
+    #     logging.debug("Post added to MongoDB")
+    #     return item
+
     def process_item(self, item, spider):
-        ## how to handle each post
-        try:
-            results=self.db[self.collection_name].find({'shoe.id':item['shoe']['id']})
-            resultscount=results.limit(1).count()
-        except Exception as E:
-            resultscount=0
-        if resultscount>0:
-
-            old_item_cards=results[0]['shoe']['cards']
-            old_item_restriction=results[0]['shoe']['restricted']
-            old_item_style=results[0]['shoe']['product']['style']
-            new_item_restriction = item['shoe']['restricted']
-            new_item_style=item['shoe']['product']['style']
-            new_item_color=item['shoe']['product']['colorCode']
-            if old_item_restriction!=new_item_restriction and str(new_item_restriction)=='true':
-                attachments = full_post(item)
-                self.slack_client.api_call("chat.postMessage", channel="restricted_access", attachments=attachments)
-                print("restricted access!")
-            if new_item_style=='999999' and new_item_color=='999' and new_item_style!=old_item_style:
-                attachments = full_post(item)
-                self.slack_client.api_call("chat.postMessage", channel="hunt_bet", attachments=attachments)
-                print("hunt_bet")
-            results = self.db[self.collection_name].update_one({"shoe.id": item['shoe']['id']},
-                                                      {'$set': {"shoe": item['shoe']}})
-
-        else:
-            attachments=full_post(item)
-            self.slack_client.api_call("chat.postMessage",channel="new_snkrs",attachments=attachments)
-            self.db[self.collection_name].insert(dict(item))
-        logging.debug("Post added to MongoDB")
+        results = self.db[self.collection_name].find_one({'id': item['shoe']['id']})
+        old_item_cards = results[0]['shoe']['cards']
+        old_item_restriction = results[0]['shoe']['restricted']
+        old_item_style = results[0]['shoe']['product']['style']
+        new_item_restriction = item['shoe']['restricted']
+        new_item_style = item['shoe']['product']['style']
+        new_item_color = item['shoe']['product']['colorCode']
+        results = self.db[self.collection_name].replace_one({"id": item['shoe']['id']},
+                                                            item["shoe"], upsert=True)
         return item

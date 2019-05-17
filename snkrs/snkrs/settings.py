@@ -23,7 +23,7 @@ RETRY_TIMES=20
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
-LOG_ENABLED = False
+LOG_ENABLED = True
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
