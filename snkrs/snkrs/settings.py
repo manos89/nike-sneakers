@@ -15,7 +15,7 @@ ITEM_PIPELINES = {
 }
 SPIDER_MODULES = ['snkrs.spiders']
 NEWSPIDER_MODULE = 'snkrs.spiders'
-MONGO_DATABASE = 'nikesnkrs'
+MONGO_DATABASE = 'sneakers'
 MONGO_URI = 'mongodb://localhost:27017'
 RETRY_TIMES=20
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -23,7 +23,7 @@ RETRY_TIMES=20
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
-LOG_ENABLED = True
+LOG_ENABLED = False
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
